@@ -26,7 +26,7 @@ requestor(requestion [, initial])
     request, triggering the requestion function with a failure result.
 
     The initial parameter contains a value that may be used to initialize the
-    request. It is provided specifically for RQ.reduce, but it may be passed
+    request. It is provided specifically for RQ.sequence, but it may be passed
     to any requestor.
 
 
@@ -65,8 +65,8 @@ requestors:
 
     RQ.fallback(requestors, milliseconds)
     RQ.race(requestors, milliseconds)
-    RQ.map(requestors, optionals, milliseconds, tilliseconds)
-    RQ.reduce(requestors, milliseconds)
+    RQ.parallel(requestors, optionals, milliseconds, tilliseconds)
+    RQ.sequence(requestors, milliseconds)
 
 All four of these requestory function return a quash function.
 
@@ -98,12 +98,13 @@ RQ.race(requestors [, milliseconds])
     requests are canceled.
 
 
-RQ.map(requestors [, milliseconds])
-RQ.map(requestors, optionals [, milliseconds, [tilliseconds]])
+RQ.parallel(requestors [, milliseconds])
+RQ.parallel(requestors, optionals [, milliseconds, [tilliseconds]])
 
-    RQ.map processes many requests in parallel, producing an array of all of
-    the uccessful results. It can take two arrays of requests: Those that are
-    required to produce results, and those that may optionally produce results.
+    RQ.parallel processes many requests in parallel, producing an array of all
+    of the successful results. It can take two arrays of requests: Those that
+    are required to produce results, and those that may optionally produce
+    results.
 
 
 
@@ -114,8 +115,8 @@ RQ.map(requestors, optionals [, milliseconds, [tilliseconds]])
 */
 
 /*properties
-    array, evidence, fallback, freeze, forEach, index, isArray, length, map,
-    message, method, milliseconds, name, race, reduce, value
+    array, evidence, fallback, freeze, forEach, index, isArray, length,
+    message, method, milliseconds, name, parallel, race, sequence, value
 */
 
 var RQ = (function () {
@@ -258,7 +259,8 @@ var RQ = (function () {
                 return quash;
             };
         },
-        map: function map(requestors, optionals, milliseconds, tilliseconds) {
+        parallel: function parallel(requestors, optionals, milliseconds,
+                tilliseconds) {
 
 // The optionals parameter is optional.
 
@@ -267,7 +269,8 @@ var RQ = (function () {
                 tilliseconds = undefined;
                 optionals = undefined;
             }
-            check("RQ.map", requestors, milliseconds, optionals, tilliseconds);
+            check("RQ.parallel", requestors, milliseconds, optionals,
+                tilliseconds);
 
             return function requestor(requestion, initial) {
                 var quashes = [],
@@ -306,10 +309,10 @@ var RQ = (function () {
                     return finish(undefined, reason || true);
                 }
 
-                check_requestion("RQ.map", requestion, initial);
+                check_requestion("RQ.parallel", requestion, initial);
 
 // milliseconds, if specified, says take no longer to process this request. If
-// any of the required requestors are not successful by this time, the map
+// any of the required requestors are not successful by this time, the parallel
 // requestor fails.
 
                 if (milliseconds) {
@@ -319,7 +322,7 @@ var RQ = (function () {
                                 (requestors_length > 0 ||
                                 optionals_successes > 0)
                             ? finish(results)
-                            : quash(expired("RQ.map", milliseconds));
+                            : quash(expired("RQ.parallel", milliseconds));
                     }, milliseconds);
 
 // tilliseconds, if specified, gives more time for the optional requestors to
@@ -425,7 +428,7 @@ var RQ = (function () {
                         if (timeout_id) {
                             clearTimeout(timeout_id);
                         }
-                        quashes.map(function stop(quash) {
+                        quashes.parallel(function stop(quash) {
                             if (typeof quash === 'function') {
                                 return setImmediate(quash);
                             }
@@ -471,16 +474,16 @@ var RQ = (function () {
                 return quash;
             };
         },
-        reduce: function reduce(requestors, milliseconds) {
+        sequence: function sequence(requestors, milliseconds) {
 
-// reduce takes an array of requestor functions, and returns a requestor that
+// sequence takes an array of requestor functions, and returns a requestor that
 // will call them each in order. An initial value is passed to each, which is
 // the previous success result.
 
-// If any of the requestor functions fails, then the whole reduce fails, and
+// If any of the requestor functions fails, then the whole sequence fails, and
 // the remaining requestors are not called.
 
-            check("RQ.reduce", requestors, milliseconds);
+            check("RQ.sequence", requestors, milliseconds);
             return function requestor(requestion, initial) {
                 var cancel,
                     timeout_id;
@@ -504,11 +507,11 @@ var RQ = (function () {
                     return finish(undefined, reason || true);
                 }
 
-                check_requestion("RQ.reduce", requestion);
+                check_requestion("RQ.sequence", requestion);
                 if (milliseconds) {
                     timeout_id = setTimeout(function () {
                         timeout_id = null;
-                        return quash(expired("RQ.reduce", milliseconds));
+                        return quash(expired("RQ.sequence", milliseconds));
                     }, milliseconds);
                 }
                 (function next(index) {
