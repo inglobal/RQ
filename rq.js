@@ -1,6 +1,6 @@
 /*
     rq.js
-    2013-04-08
+    2013-05-17
 
     Douglas Crockford
 
@@ -38,7 +38,9 @@ requestion(success, failure)
     failure. If the request succeeds, then the result will be passed to the
     requestion function as the success parameter, and the failure parameter
     will be undefined. If the request fails, then the requestion function will
-    be passed the reason as the failure parameter.
+    be passed the reason as the failure parameter. If failure is undefined,
+    the then request succeeded. If failure is any other value, then the request
+    failed.
 
 
 quash(reason)
@@ -82,20 +84,20 @@ RQ.fallback(requestors, milliseconds)
 
     If the optional milliseconds argument is supplied, then if a request is not
     successful in the alotted time, then the fallback fails, and the pending
-    request is canceled.
+    request is quashed.
 
 
 RQ.race(requestors [, milliseconds])
     returns a requestor function
 
-    RQ.race takes an array of requestor functions. It starts them all off. Its
-    result is the result of the first contestant to successfully finish and all
-    of the other requests are cancelled. If all of the requestors fail, then
-    the race ails.
+    RQ.race takes an array of requestor functions. It starts them all in
+    parallel. Its result is the result of the first requestor to successfully
+    finish and all of the other requests are cancelled. If all of the
+    requestors fail, then the race fails.
 
     If the optional milliseconds argument is supplied, then if a request is
     not successful in the alotted time, then the race fails, and all pending
-    requests are canceled.
+    requests are quashed.
 
 
 RQ.parallel(requestors [, milliseconds])
@@ -428,7 +430,7 @@ var RQ = (function () {
                         if (timeout_id) {
                             clearTimeout(timeout_id);
                         }
-                        quashes.parallel(function stop(quash) {
+                        quashes.forEach(function stop(quash) {
                             if (typeof quash === 'function') {
                                 return setImmediate(quash);
                             }
@@ -507,7 +509,7 @@ var RQ = (function () {
                     return finish(undefined, reason || true);
                 }
 
-                check_requestion("RQ.sequence", requestion);
+                check_requestion("RQ.sequence", requestion, initial);
                 if (milliseconds) {
                     timeout_id = setTimeout(function () {
                         timeout_id = null;
