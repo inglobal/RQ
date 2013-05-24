@@ -1,8 +1,9 @@
 /*
     rq.js
-    2013-05-17
 
     Douglas Crockford
+    2013-05-17
+    Public Domain
 
 This package uses four kinds of functions:
     requestor
