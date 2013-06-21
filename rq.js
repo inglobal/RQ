@@ -84,7 +84,7 @@ RQ.fallback(requestors, milliseconds)
     succeeds, then the fallback succeeds.
 
     If the optional milliseconds argument is supplied, then if a request is not
-    successful in the alotted time, then the fallback fails, and the pending
+    successful in the allotted time, then the fallback fails, and the pending
     request is quashed.
 
 
@@ -97,7 +97,7 @@ RQ.race(requestors [, milliseconds])
     requestors fail, then the race fails.
 
     If the optional milliseconds argument is supplied, then if a request is
-    not successful in the alotted time, then the race fails, and all pending
+    not successful in the allotted time, then the race fails, and all pending
     requests are quashed.
 
 
@@ -393,8 +393,8 @@ var RQ = (function () {
                                                     : quash(failure);
                                             }
                                             if (timeout_till) {
-                                                timeout_till = null;
                                                 clearTimeout(timeout_till);
+                                                timeout_till = null;
                                             }
                                         }
                                     }
@@ -479,7 +479,7 @@ var RQ = (function () {
         },
         sequence: function sequence(requestors, milliseconds) {
 
-// sequence takes an array of requestor functions, and returns a requestor that
+// RQ.sequence takes an array of requestor functions, and returns a requestor that
 // will call them each in order. An initial value is passed to each, which is
 // the previous success result.
 
